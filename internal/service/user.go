@@ -2,9 +2,10 @@ package service
 
 import (
 	"fmt"
+	"url-shortener/internal/cache"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"url-shortener/internal/cache"
 )
 
 type UserService struct {

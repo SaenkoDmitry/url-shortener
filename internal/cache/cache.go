@@ -2,14 +2,19 @@ package cache
 
 import (
 	"errors"
+
 	lru "github.com/hashicorp/golang-lru"
 )
 
-func NewCache() MyCache {
-	l, _ := lru.New(128)
+func NewCache(size int) (MyCache, error) {
+	l, err := lru.New(size)
+	if err != nil {
+		return nil, err
+	}
+
 	return &inMemoryCache{
 		l: l,
-	}
+	}, nil
 }
 
 type MyCache interface {

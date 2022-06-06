@@ -1,13 +1,18 @@
 package main
 
 import (
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"log"
 	"net/http"
 	"url-shortener/internal/api"
 	"url-shortener/internal/cache"
 	"url-shortener/internal/service"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+)
+
+const (
+	cacheSize = 128
 )
 
 func main() {
@@ -21,8 +26,11 @@ func main() {
 		AllowMethods: []string{echo.GET, echo.PUT, echo.POST, echo.DELETE},
 	}))
 
-	uriCache := cache.NewCache()
-	// ... some another database
+	uriCache, err := cache.NewCache(cacheSize)
+	if err != nil {
+		panic(err)
+	}
+	// ... some database
 
 	// service 1
 	userService := service.NewUserService(uriCache)

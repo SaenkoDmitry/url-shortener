@@ -2,10 +2,16 @@ package service
 
 import (
 	"fmt"
+	"net/http"
+	"time"
 	"url-shortener/internal/cache"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+)
+
+const (
+	expires = 24 * time.Hour
 )
 
 type UserService struct {
@@ -18,20 +24,31 @@ func NewUserService(cacheStore cache.MyCache) *UserService {
 	}
 }
 
-func (u *UserService) GetAPIKey(c echo.Context) (string, error) {
-	remoteAddr := c.Request().RemoteAddr
-	if APIKey, ok := u.cacheStore.Get(remoteAddr); ok {
+func (u *UserService) GetAPIKey(ctx echo.Context) (string, error) {
+	remoteAddr := ctx.Request().RemoteAddr
+	key := remoteAddr
+
+	if APIKey, ok := u.cacheStore.Get(key); ok {
 		return APIKey.(string), nil
 	}
 
-	generatedKey, err := uuid.NewUUID()
+	uniqueUUID, err := uuid.NewUUID() // need special module for generating unique api keys
 	if err != nil {
 		return "", fmt.Errorf("cannot generate uuid string for api key: %v", err)
 	}
 
-	if err1 := u.cacheStore.Set(remoteAddr, generatedKey); err1 != nil {
-		return "", fmt.Errorf("cannot save api key: %v", err1.Error())
-	}
+	userAPIKey := uniqueUUID.String()
 
-	return generatedKey.String(), nil
+	u.cacheStore.Set(key, userAPIKey)
+	setAPIKeyCookie(ctx, userAPIKey)
+
+	return userAPIKey, nil
+}
+
+func setAPIKeyCookie(ctx echo.Context, key string) {
+	cookie := new(http.Cookie)
+	cookie.Name = "api-key"
+	cookie.Value = key
+	cookie.Expires = time.Now().Add(expires)
+	ctx.SetCookie(cookie)
 }

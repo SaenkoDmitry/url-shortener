@@ -2,7 +2,9 @@ package main
 
 import (
 	"log"
+	"math/rand"
 	"net/http"
+	"time"
 	"url-shortener/internal/api"
 	"url-shortener/internal/cache"
 	"url-shortener/internal/service"
@@ -12,10 +14,13 @@ import (
 )
 
 const (
-	cacheSize = 128
+	apiKeyCacheSize = 32 * 1024   // up to 32 k users
+	URLCacheSize    = 1024 * 1024 // up to 1 million URL records // TODO limit requests by user api key
 )
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
+
 	e := echo.New()
 
 	e.Use(middleware.Logger())
@@ -26,22 +31,33 @@ func main() {
 		AllowMethods: []string{echo.GET, echo.PUT, echo.POST, echo.DELETE},
 	}))
 
-	uriCache, err := cache.NewCache(cacheSize)
-	if err != nil {
-		panic(err)
-	}
-	// ... some database
+	apiKeyCache, err := cache.NewCache(apiKeyCacheSize)
+	mustInit(err)
 
-	// service 1
-	userService := service.NewUserService(uriCache)
+	URLCache, err := cache.NewCache(URLCacheSize)
+	mustInit(err)
+
+	shortURLCache, err := cache.NewCache(URLCacheSize)
+	mustInit(err)
+	// ... some another stores or component
+
+	userService := service.NewUserService(apiKeyCache)
+	uriService := service.NewURLService(URLCache, shortURLCache)
 
 	// Initialize api
-	h := api.NewHandler(userService)
+	h := api.NewHandler(userService, uriService)
 
-	e.POST("/api/uri/create", h.CreateURI)
 	e.POST("/api/user/api-key", h.CreateAPIKey)
+	e.POST("/api/url", h.CreateURL)
+	e.GET("/api/url", h.GetURL)
 
 	if err := e.Start(":8080"); err != http.ErrServerClosed {
 		log.Fatal(err)
+	}
+}
+
+func mustInit(err error) {
+	if err != nil {
+		panic(err)
 	}
 }

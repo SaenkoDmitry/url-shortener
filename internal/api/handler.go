@@ -5,11 +5,13 @@ import (
 )
 
 type Handler struct {
-	us *service.UserService
+	us  *service.UserService
+	url *service.URLService
 }
 
-func NewHandler(userService *service.UserService) *Handler {
+func NewHandler(userService *service.UserService, uriService *service.URLService) *Handler {
 	return &Handler{
-		us: userService,
+		us:  userService,
+		url: uriService,
 	}
 }

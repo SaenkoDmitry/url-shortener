@@ -1,8 +1,6 @@
 package cache
 
 import (
-	"errors"
-
 	lru "github.com/hashicorp/golang-lru"
 )
 
@@ -19,7 +17,7 @@ func NewCache(size int) (MyCache, error) {
 
 type MyCache interface {
 	Get(key string) (interface{}, bool)
-	Set(key string, value interface{}) error
+	Set(key string, value interface{})
 }
 
 type inMemoryCache struct {
@@ -27,9 +25,9 @@ type inMemoryCache struct {
 }
 
 func (im *inMemoryCache) Get(key string) (interface{}, bool) {
-	return nil, false
+	return im.l.Get(key)
 }
 
-func (im *inMemoryCache) Set(key string, value interface{}) error {
-	return errors.New("TODO")
+func (im *inMemoryCache) Set(key string, value interface{}) {
+	im.l.Add(key, value)
 }

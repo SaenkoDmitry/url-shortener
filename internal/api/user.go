@@ -1,10 +1,17 @@
 package api
 
-import "github.com/labstack/echo/v4"
+import (
+	"net/http"
 
-func (h *Handler) CreateAPIKey(c echo.Context) error {
-	apiKey, err := h.us.GetAPIKey(c)
-	_ = apiKey
+	"github.com/labstack/echo/v4"
+)
 
-	return err
+func (h *Handler) CreateAPIKey(ctx echo.Context) error {
+	apiKey, err := h.us.GetAPIKey(ctx)
+	if err != nil {
+		// add logger
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, apiKey)
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 	"url-shortener/internal/cache"
+	"url-shortener/internal/metrics"
 	"url-shortener/internal/utils"
 
 	"github.com/labstack/echo/v4"
@@ -29,6 +30,8 @@ func NewURLService(cacheStore, shortURLStore cache.MyCache) *URLService {
 const (
 	CreateURIErr     = "cannot create uri: %v"
 	SuchURLNotExists = "such url not exists: %s"
+
+	CreateURLMethod = "CreateURL"
 )
 
 // CreateURL
@@ -41,9 +44,12 @@ func (s URLService) CreateURL(ctx echo.Context, sourceURL string) (string, error
 	defer func(start time.Time) {
 		if err != nil {
 			log.Errorf(CreateURIErr, err.Error())
+			metrics.HandleResponseTime(CreateURLMethod, "error", start)
+			metrics.HandleRPS(CreateURLMethod, "error")
+		} else {
+			metrics.HandleResponseTime(CreateURLMethod, "success", start)
+			metrics.HandleRPS(CreateURLMethod, "success")
 		}
-		// TODO add RT metric here
-		fmt.Println(time.Since(start))
 	}(time.Now())
 
 	key := sourceURL

@@ -9,6 +9,8 @@ import (
 	"url-shortener/internal/cache"
 	"url-shortener/internal/service"
 
+	"github.com/labstack/echo-contrib/prometheus"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -22,6 +24,9 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	e := echo.New()
+
+	p := prometheus.NewPrometheus("echo", nil)
+	p.Use(e)
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())

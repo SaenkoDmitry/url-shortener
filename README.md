@@ -4,3 +4,8 @@
 ```bash
 golangci-lint run
 ```
+
+2. app metrics available by url :
+```bash
+http://localhost:8080/metrics
+```
